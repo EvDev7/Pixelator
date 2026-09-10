@@ -1,0 +1,6 @@
+- Need to change the block size slider to be based on percentage of the image size (use smallest dimension)
+- Add in dimensions for the desired picture size, and rhinestone sizes as well (this would override the block size stuff)
+- Add the ability to pick a picture from camera roll AND ability to take a new photo
+- Add in progress bar or at least an overlay showing that the app is working when doing pixelation
+    - Also, the initial load is so slow, but that should be fixed because the app shouldn't start with a picture loaded
+- Save the pixelated Image to the camera roll
