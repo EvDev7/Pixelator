@@ -51,10 +51,12 @@ func printPixel(_ buffer: PixelBuffer, x: Int, y: Int) {
     print("Pixel (\(x), \(y)): R=\(r) G=\(g) B=\(b) A=\(a)")
 }
 
-func pixelateFromPalette(_ buffer: PixelBuffer, blockSize: Int, palette: [Color]? = nil) -> PixelBuffer {
+func pixelateFromPalette(_ buffer: PixelBuffer, blockCount: Double, palette: [Color]? = nil) -> PixelBuffer {
     var output = buffer.pixels
     let bpp = 4
     let rgbPalette = palette?.map { $0.toRGBColor() }
+    let shorterSide = min(buffer.width, buffer.height)
+    let blockSize = shorterSide/Int(blockCount)
 
     var y = 0
     while y < buffer.height {
@@ -102,9 +104,11 @@ func pixelateFromPalette(_ buffer: PixelBuffer, blockSize: Int, palette: [Color]
     return PixelBuffer(pixels: output, width: buffer.width, height: buffer.height, bytesPerRow: buffer.bytesPerRow)
 }
 
-func pixelate(_ buffer: PixelBuffer, blockSize: Int) -> PixelBuffer {
+func pixelate(_ buffer: PixelBuffer, blockCount: Double) -> PixelBuffer {
     var output = buffer.pixels
     let bpp = 4
+    let shorterSide = min(buffer.width, buffer.height)
+    let blockSize = shorterSide/Int(blockCount)
 
     var y = 0
     while y < buffer.height {

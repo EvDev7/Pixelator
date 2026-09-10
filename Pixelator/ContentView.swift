@@ -17,7 +17,7 @@ struct ContentView: View {
         Color(red: 1.0, green: 1.0, blue: 1.0),
     ]
     @State private var newColor: Color = .green
-    @State private var blockSize: Double = 50
+    @State private var blockCount: Double = 30.0
     @State private var photoPickerItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     @State private var pixelatedImage: UIImage?
@@ -52,8 +52,8 @@ struct ContentView: View {
             }
 
             VStack {
-                Text("Block size: \(Int(blockSize))")
-                Slider(value: $blockSize, in: 4...100, step: 1)
+                Text("Block Count: \(Int(blockCount))")
+                Slider(value: $blockCount, in: 10...150, step: 1)
             }
 
             List {
@@ -117,7 +117,7 @@ struct ContentView: View {
             print("No image selected or failed to buffer it")
             return
         }
-        let result = pixelateFromPalette(buffer, blockSize: Int(blockSize), palette: palette)
+        let result = pixelateFromPalette(buffer, blockCount: blockCount, palette: palette)
         guard let resultCGImage = cgImage(from: result) else {
             print("Failed to convert pixel buffer back to CGImage")
             return
@@ -131,7 +131,7 @@ struct ContentView: View {
             print("No image selected or failed to buffer it")
             return
         }
-        let result = pixelate(buffer, blockSize: Int(blockSize))
+        let result = pixelate(buffer, blockCount: blockCount)
         guard let resultCGImage = cgImage(from: result) else {
             print("Failed to convert pixel buffer back to CGImage")
             return
