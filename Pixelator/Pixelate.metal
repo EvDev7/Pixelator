@@ -14,44 +14,32 @@ kernel void pixelatePalette(
     constant uint &blockSize [[buffer(0)]],
     constant float4 *palette [[buffer(1)]],
     constant uint &paletteCount [[buffer(2)]],
-    uint2 gid [[thread_position_in_grid]])
+    uint2 gid [[thread_position_in_grid]])   // grid = one thread per block
 {
     uint width = inTexture.get_width();
     uint height = inTexture.get_height();
-    if (gid.x >= width || gid.y >= height) return;
+    uint2 origin = gid * blockSize;
+    if (origin.x >= width || origin.y >= height) return;
 
-    // Snap this thread's pixel to its block's origin
-    uint2 blockOrigin = uint2((gid.x / blockSize) * blockSize,
-                               (gid.y / blockSize) * blockSize);
+    uint2 end = min(origin + blockSize, uint2(width, height));
 
-    // Average the block (every thread in the block redundantly computes this —
-    // simple and fast enough for typical block sizes; see note below for optimizing)
     float4 sum = float4(0);
-    uint count = 0;
-    for (uint y = 0; y < blockSize; y++) {
-        for (uint x = 0; x < blockSize; x++) {
-            uint2 coord = blockOrigin + uint2(x, y);
-            if (coord.x < width && coord.y < height) {
-                sum += inTexture.read(coord);
-                count++;
-            }
-        }
-    }
-    float4 avg = sum / float(count);
+    for (uint y = origin.y; y < end.y; y++)
+        for (uint x = origin.x; x < end.x; x++)
+            sum += inTexture.read(uint2(x, y));
+    float4 avg = sum / float((end.x - origin.x) * (end.y - origin.y));
 
-    // Snap to nearest palette color, if a palette was provided
-    float4 finalColor = avg;
+    float4 color = avg;
     if (paletteCount > 0) {
-        float bestDist = INFINITY;
+        float best = INFINITY;
         for (uint i = 0; i < paletteCount; i++) {
-            float3 diff = avg.rgb - palette[i].rgb;
-            float dist = dot(diff, diff);
-            if (dist < bestDist) {
-                bestDist = dist;
-                finalColor = float4(palette[i].rgb, avg.a);
-            }
+            float3 d = avg.rgb - palette[i].rgb;
+            float dist = dot(d, d);
+            if (dist < best) { best = dist; color = float4(palette[i].rgb, avg.a); }
         }
     }
 
-    outTexture.write(finalColor, gid);
+    for (uint y = origin.y; y < end.y; y++)
+        for (uint x = origin.x; x < end.x; x++)
+            outTexture.write(color, uint2(x, y));
 }
