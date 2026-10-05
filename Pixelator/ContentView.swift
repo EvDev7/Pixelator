@@ -112,14 +112,12 @@ struct ContentView: View {
     }
 
     private func runPixelation() {
-        guard let sourceCGImage = selectedImage?.cgImage,
-              let buffer = pixelBuffer(from: sourceCGImage) else {
+        guard let sourceCGImage = selectedImage?.cgImage else {
             print("No image selected or failed to buffer it")
             return
         }
         let pixelator = MetalPixelator()
-        let result = pixelator?.pixelate(cgImage: sourceCGImage, blockSize: 40, palette: palette)
-        //let result = pixelateFromPalette(buffer, blockCount: blockCount, palette: palette)
+        let result = pixelator?.pixelate(cgImage: sourceCGImage, blockCount: blockCount, palette: palette)
         guard let resultCGImage = result else {
             print("Failed to convert pixel buffer back to CGImage")
             return
@@ -128,13 +126,13 @@ struct ContentView: View {
     }
 
     private func runStandardPixelation() {
-        guard let sourceCGImage = selectedImage?.cgImage,
-              let buffer = pixelBuffer(from: sourceCGImage) else {
+        guard let sourceCGImage = selectedImage?.cgImage else {
             print("No image selected or failed to buffer it")
             return
         }
-        let result = pixelate(buffer, blockCount: blockCount)
-        guard let resultCGImage = cgImage(from: result) else {
+        let pixelator = MetalPixelator()
+        let result = pixelator?.pixelate(cgImage: sourceCGImage, blockCount: blockCount, palette: palette) // TODO: Fix when no palette provided.
+        guard let resultCGImage = result else {
             print("Failed to convert pixel buffer back to CGImage")
             return
         }

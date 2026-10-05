@@ -32,9 +32,11 @@ final class MetalPixelator {
         }
     }
 
-    func pixelate(cgImage: CGImage, blockSize: Int, palette: [Color]) -> CGImage? {
+    func pixelate(cgImage: CGImage, blockCount: Double, palette: [Color]) -> CGImage? {
         let width = cgImage.width
         let height = cgImage.height
+        let shorterSide = min(width, height)
+        let blockSize = shorterSide/Int(blockCount)
         let rgbPalette = palette.map { $0.toRGBColor() }
         
         let textureLoader = MTKTextureLoader(device: device)
