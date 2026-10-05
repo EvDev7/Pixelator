@@ -117,8 +117,10 @@ struct ContentView: View {
             print("No image selected or failed to buffer it")
             return
         }
-        let result = pixelateFromPalette(buffer, blockCount: blockCount, palette: palette)
-        guard let resultCGImage = cgImage(from: result) else {
+        let pixelator = MetalPixelator()
+        let result = pixelator?.pixelate(cgImage: sourceCGImage, blockSize: 40, palette: palette)
+        //let result = pixelateFromPalette(buffer, blockCount: blockCount, palette: palette)
+        guard let resultCGImage = result else {
             print("Failed to convert pixel buffer back to CGImage")
             return
         }
