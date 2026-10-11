@@ -20,7 +20,7 @@ final class MetalPixelator {
         guard let device = MTLCreateSystemDefaultDevice(),
               let commandQueue = device.makeCommandQueue(),
               let library = device.makeDefaultLibrary(),
-              let function = library.makeFunction(name: "pixelatePalette") else {
+              let function = library.makeFunction(name: "pixelate") else {
             return nil
         }
         self.device = device
@@ -34,13 +34,13 @@ final class MetalPixelator {
         }
     }
 
-    func pixelate(cgImage: CGImage, blockCount: Double, palette: [Color]) -> CGImage? {
+    func pixelate(cgImage: CGImage, blockCount: Double, palette: [Color]? = nil) -> CGImage? {
         let width = cgImage.width
         let height = cgImage.height
         let shorterSide = min(width, height)
         // Clamp so blockCount < 1 or > shorterSide can't cause divide-by-zero / blockSize == 0
         let blockSize = max(1, shorterSide / max(1, Int(blockCount)))
-        let rgbPalette = palette.map { $0.toRGBColor() }
+        let rgbPalette = (palette ?? []).map { $0.toRGBColor() }
 
         let textureLoader = MTKTextureLoader(device: device)
         guard let inTexture = try? textureLoader.newTexture(cgImage: cgImage, options: [

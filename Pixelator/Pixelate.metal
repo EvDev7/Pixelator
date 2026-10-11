@@ -8,7 +8,7 @@
 #include <metal_stdlib>
 using namespace metal;
 
-kernel void pixelatePalette(
+kernel void pixelate(
     texture2d<float, access::read> inTexture [[texture(0)]],
     texture2d<float, access::write> outTexture [[texture(1)]],
     constant uint &blockSize [[buffer(0)]],

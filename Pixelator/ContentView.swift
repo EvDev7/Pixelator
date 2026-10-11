@@ -89,7 +89,7 @@ struct ContentView: View {
 
             HStack {
                 Button("Pixelate with Palette") {
-                    runPixelation()
+                    runPalettePixelation()
                 }
                 .buttonStyle(.borderedProminent)
 
@@ -111,7 +111,7 @@ struct ContentView: View {
         }
     }
 
-    private func runPixelation() {
+    private func runPalettePixelation() {
         guard let sourceCGImage = selectedImage?.cgImage else {
             print("No image selected or failed to buffer it")
             return
@@ -131,7 +131,7 @@ struct ContentView: View {
             return
         }
         let pixelator = MetalPixelator()
-        let result = pixelator?.pixelate(cgImage: sourceCGImage, blockCount: blockCount, palette: palette) // TODO: Fix when no palette provided.
+        let result = pixelator?.pixelate(cgImage: sourceCGImage, blockCount: blockCount)
         guard let resultCGImage = result else {
             print("Failed to convert pixel buffer back to CGImage")
             return
