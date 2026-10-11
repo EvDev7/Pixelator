@@ -11,9 +11,10 @@ import PhotosUI
 struct ContentView: View {
     @State private var palette: [Color] = [
         Color(red: 0.0, green: 0.0, blue: 0.0),
-        Color(red: 0.25, green: 0.25, blue: 0.25),
-        Color(red: 0.5, green: 0.5, blue: 0.5),
-        Color(red: 0.75, green: 0.75, blue: 0.75),
+        Color(red: 0.2, green: 0.2, blue: 0.2),
+        Color(red: 0.4, green: 0.4, blue: 0.4),
+        Color(red: 0.6, green: 0.6, blue: 0.6),
+        Color(red: 0.8, green: 0.8, blue: 0.8),
         Color(red: 1.0, green: 1.0, blue: 1.0),
     ]
     @State private var newColor: Color = .green
@@ -28,28 +29,8 @@ struct ContentView: View {
                 Label("Choose Photo", systemImage: "photo.on.rectangle")
             }
             .buttonStyle(.bordered)
-
-            if let selectedImage {
-                Image(uiImage: selectedImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 250)
-            } else {
-                Text("No photo selected")
-                    .foregroundStyle(.secondary)
-                    .frame(maxHeight: 250)
-            }
-
-            if let pixelatedImage {
-                Image(uiImage: pixelatedImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 250)
-            } else {
-                Text("Tap Pixelate to preview")
-                    .foregroundStyle(.secondary)
-                    .frame(maxHeight: 250)
-            }
+            
+            imagePreviews
 
             VStack {
                 Text("Block Count: \(Int(blockCount))")
@@ -110,7 +91,36 @@ struct ContentView: View {
             }
         }
     }
+    
+    private var isPortrait: Bool {
+        guard let size = selectedImage?.size else { return false }
+        return size.height > size.width
+    }
 
+    private var imagePreviews: some View {
+        let layout = isPortrait
+            ? AnyLayout(HStackLayout(spacing: 12))
+            : AnyLayout(VStackLayout(spacing: 12))
+        return layout {
+            previewImage(selectedImage, placeholder: "No photo selected")
+            previewImage(pixelatedImage, placeholder: "Tap Pixelate to preview")
+        }
+    }
+
+    @ViewBuilder
+    private func previewImage(_ image: UIImage?, placeholder: String) -> some View {
+        if let image {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: 250)
+        } else {
+            Text(placeholder)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: 250)
+        }
+    }
+    
     private func runPixelation(usePalette: Bool) {
         guard let sourceCGImage = selectedImage?.cgImage else {
             print("No image selected or failed to buffer it")
