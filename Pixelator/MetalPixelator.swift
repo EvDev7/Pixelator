@@ -15,6 +15,7 @@ final class MetalPixelator {
     let commandQueue: MTLCommandQueue
     let pipelineState: MTLComputePipelineState
     private let ciContext: CIContext   // reused across calls (creating one is expensive)
+    static let shared = MetalPixelator()
 
     init?() {
         guard let device = MTLCreateSystemDefaultDevice(),

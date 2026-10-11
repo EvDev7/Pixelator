@@ -89,12 +89,12 @@ struct ContentView: View {
 
             HStack {
                 Button("Pixelate with Palette") {
-                    runPalettePixelation()
+                    runPixelation(usePalette: true)
                 }
                 .buttonStyle(.borderedProminent)
 
                 Button("Pixelate") {
-                    runStandardPixelation()
+                    runPixelation(usePalette: false)
                 }
                 .buttonStyle(.borderedProminent)
             }
@@ -111,32 +111,32 @@ struct ContentView: View {
         }
     }
 
-    private func runPalettePixelation() {
+    private func runPixelation(usePalette: Bool) {
         guard let sourceCGImage = selectedImage?.cgImage else {
             print("No image selected or failed to buffer it")
             return
         }
-        let pixelator = MetalPixelator()
-        let result = pixelator?.pixelate(cgImage: sourceCGImage, blockCount: blockCount, palette: palette)
-        guard let resultCGImage = result else {
-            print("Failed to convert pixel buffer back to CGImage")
+        guard let pixelator = MetalPixelator.shared,
+              let resultCGImage = pixelator.pixelate(
+                cgImage: sourceCGImage,
+                blockCount: blockCount,
+                palette: usePalette ? palette : nil
+              ) else {
+            print("Pixelation failed")
             return
         }
         pixelatedImage = UIImage(cgImage: resultCGImage)
     }
+}
 
-    private func runStandardPixelation() {
-        guard let sourceCGImage = selectedImage?.cgImage else {
-            print("No image selected or failed to buffer it")
-            return
-        }
-        let pixelator = MetalPixelator()
-        let result = pixelator?.pixelate(cgImage: sourceCGImage, blockCount: blockCount)
-        guard let resultCGImage = result else {
-            print("Failed to convert pixel buffer back to CGImage")
-            return
-        }
-        pixelatedImage = UIImage(cgImage: resultCGImage)
+extension UIImage {
+    func normalizedOrientation() -> UIImage {
+        if imageOrientation == .up { return self }
+
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        draw(in: CGRect(origin: .zero, size: size))
+        return UIGraphicsGetImageFromCurrentImageContext() ?? self
     }
 }
 

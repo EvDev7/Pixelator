@@ -13,27 +13,6 @@ struct RGBColor {
     let b: UInt8
 }
 
-func distanceSquared(_ a: RGBColor, _ b: (r: Int, g: Int, b: Int)) -> Int {
-    let dr = Int(a.r) - b.r
-    let dg = Int(a.g) - b.g
-    let db = Int(a.b) - b.b
-    return dr * dr + dg * dg + db * db
-}
-
-func closestColor(to avg: (r: Int, g: Int, b: Int), in palette: [RGBColor]) -> RGBColor {
-    var best = palette[0]
-    var bestDist = distanceSquared(best, avg)
-
-    for color in palette.dropFirst() {
-        let dist = distanceSquared(color, avg)
-        if dist < bestDist {
-            best = color
-            bestDist = dist
-        }
-    }
-    return best
-}
-
 extension Color {
     func toRGBColor() -> RGBColor {
         let uiColor = UIColor(self)
