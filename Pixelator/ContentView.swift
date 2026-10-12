@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @State private var palette: [Color] = [
@@ -22,6 +23,7 @@ struct ContentView: View {
     @State private var photoPickerItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     @State private var pixelatedImage: UIImage?
+    @State private var fullScreenTarget: FullScreenTarget?
 
     var body: some View {
         VStack(spacing: 16) {
@@ -31,6 +33,16 @@ struct ContentView: View {
             .buttonStyle(.bordered)
             
             imagePreviews
+            
+            if let pixelatedImage {
+                ShareLink(
+                    item: PixelatedImage(image: pixelatedImage),
+                    preview: SharePreview("Pixelated image", image: Image(uiImage: pixelatedImage))
+                ) {
+                    Label("Share / Save", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(.bordered)
+            }
 
             VStack {
                 Text("Block Count: \(Int(blockCount))")
@@ -81,6 +93,18 @@ struct ContentView: View {
             }
         }
         .padding()
+        .fullScreenCover(item: $fullScreenTarget) { target in
+            switch target {
+            case .original:
+                if let selectedImage {
+                    FullScreenImageView(image: selectedImage, isPixelated: false)
+                }
+            case .pixelated:
+                if let pixelatedImage {
+                    FullScreenImageView(image: pixelatedImage, isPixelated: true)
+                }
+            }
+        }
         .onChange(of: photoPickerItem) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self),
@@ -103,7 +127,13 @@ struct ContentView: View {
             : AnyLayout(VStackLayout(spacing: 12))
         return layout {
             previewImage(selectedImage, placeholder: "No photo selected")
+                .onTapGesture {
+                    if selectedImage != nil { fullScreenTarget = .original }
+                }
             previewImage(pixelatedImage, placeholder: "Tap Pixelate to preview")
+                .onTapGesture {
+                    if pixelatedImage != nil { fullScreenTarget = .pixelated }
+                }
         }
     }
 
@@ -136,6 +166,93 @@ struct ContentView: View {
             return
         }
         pixelatedImage = UIImage(cgImage: resultCGImage)
+    }
+}
+
+enum FullScreenTarget: Identifiable {
+    case original, pixelated
+    var id: Self { self }
+}
+
+// Tells ShareLink how to export the image: always as PNG, so block edges stay sharp.
+struct PixelatedImage: Transferable {
+    let image: UIImage
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .png) { item in
+            guard let data = item.image.pngData() else {
+                throw CocoaError(.fileWriteUnknown)
+            }
+            return data
+        }
+    }
+}
+
+struct FullScreenImageView: View {
+    let image: UIImage
+    let isPixelated: Bool
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var scale: CGFloat = 1
+    @State private var lastScale: CGFloat = 1
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            Image(uiImage: image)
+                .resizable()
+                .interpolation(isPixelated ? .none : .high)   // crisp blocks for pixelated, smooth for the original photo
+                .scaledToFit()
+                .scaleEffect(scale)
+                .offset(offset)
+                .gesture(
+                    MagnifyGesture()
+                        .onChanged { value in
+                            scale = max(1, lastScale * value.magnification)
+                        }
+                        .onEnded { _ in
+                            lastScale = scale
+                            if scale <= 1 { resetZoom() }
+                        }
+                        .simultaneously(with:
+                            DragGesture()
+                                .onChanged { value in
+                                    guard scale > 1 else { return }
+                                    offset = CGSize(
+                                        width: lastOffset.width + value.translation.width,
+                                        height: lastOffset.height + value.translation.height)
+                                }
+                                .onEnded { _ in lastOffset = offset }
+                        )
+                )
+                .onTapGesture(count: 2) {
+                    withAnimation { resetZoom() }
+                }
+
+            HStack {
+                Button("Done") { dismiss() }
+                Spacer()
+                if isPixelated {
+                    ShareLink(
+                        item: PixelatedImage(image: image),
+                        preview: SharePreview("Pixelated image", image: Image(uiImage: image))
+                    ) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+            }
+            .padding()
+        }
+    }
+
+    private func resetZoom() {
+        scale = 1
+        lastScale = 1
+        offset = .zero
+        lastOffset = .zero
     }
 }
 
