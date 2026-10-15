@@ -36,15 +36,28 @@ final class MetalPixelator {
     }
 
     func pixelate(cgImage: CGImage, blockCount: Double, palette: [Color]? = nil) -> CGImage? {
-        let width = cgImage.width
-        let height = cgImage.height
-        let shorterSide = min(width, height)
+        let fullWidth = cgImage.width
+        let fullHeight = cgImage.height
+        let shorterSide = min(fullWidth, fullHeight)
+        let count = max(1, Int(blockCount))
         // Clamp so blockCount < 1 or > shorterSide can't cause divide-by-zero / blockSize == 0
-        let blockSize = max(1, shorterSide / max(1, Int(blockCount)))
+        let blockSize = max(1, shorterSide / count)
+
+        // Center-crop to a whole number of blocks so every block is the same size.
+        // The short side gets exactly `count` blocks; the long side gets as many as fit.
+        let shortCrop = min(count, shorterSide / blockSize) * blockSize
+        let width = fullWidth == shorterSide ? shortCrop : (fullWidth / blockSize) * blockSize
+        let height = fullHeight == shorterSide ? shortCrop : (fullHeight / blockSize) * blockSize
+        let cropRect = CGRect(
+            x: (fullWidth - width) / 2,
+            y: (fullHeight - height) / 2,
+            width: width,
+            height: height)
+        guard let sourceImage = cgImage.cropping(to: cropRect) else { return nil }
         let rgbPalette = (palette ?? []).map { $0.toRGBColor() }
 
         let textureLoader = MTKTextureLoader(device: device)
-        guard let inTexture = try? textureLoader.newTexture(cgImage: cgImage, options: [
+        guard let inTexture = try? textureLoader.newTexture(cgImage: sourceImage, options: [
             .SRGB: false
         ]) else { return nil }
 

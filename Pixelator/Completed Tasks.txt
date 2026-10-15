@@ -1,0 +1,7 @@
+- Need to change the block size slider to be based on percentage of the image size (use smallest dimension)
+- Add the ability to pick a picture from camera roll AND ability to take a new photo
+- Also, the initial load is so slow, but that should be fixed because the app shouldn't start with a picture loaded
+- Save the pixelated Image to the camera roll
+    
+- One consideration is the edges. What if there is only one pixel "left over" for the last block? It would look a little odd in this case because that one pixel would "look like" a full block.
+    - See claude response. Can center picture beforehand. Loses a few pixels, but would give the user a true resulting image that follows block size.
