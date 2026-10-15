@@ -130,7 +130,7 @@ struct ContentView: View {
                 .onTapGesture {
                     if selectedImage != nil { fullScreenTarget = .original }
                 }
-            previewImage(pixelatedImage, placeholder: "Tap Pixelate to preview")
+            previewImage(pixelatedImage)
                 .onTapGesture {
                     if pixelatedImage != nil { fullScreenTarget = .pixelated }
                 }
@@ -138,16 +138,18 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func previewImage(_ image: UIImage?, placeholder: String) -> some View {
+    private func previewImage(_ image: UIImage?, placeholder: String? = nil) -> some View {
         if let image {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: .infinity, maxHeight: 250)
         } else {
-            Text(placeholder)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: 250)
+            if let placeholder {
+                Text(placeholder)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: 250)
+            }
         }
     }
     
@@ -201,36 +203,40 @@ struct FullScreenImageView: View {
     var body: some View {
         ZStack(alignment: .top) {
             Color.black.ignoresSafeArea()
-
-            Image(uiImage: image)
-                .resizable()
-                .interpolation(isPixelated ? .none : .high)   // crisp blocks for pixelated, smooth for the original photo
-                .scaledToFit()
-                .scaleEffect(scale)
-                .offset(offset)
-                .gesture(
-                    MagnifyGesture()
-                        .onChanged { value in
-                            scale = max(1, lastScale * value.magnification)
-                        }
-                        .onEnded { _ in
-                            lastScale = scale
-                            if scale <= 1 { resetZoom() }
-                        }
-                        .simultaneously(with:
-                            DragGesture()
-                                .onChanged { value in
-                                    guard scale > 1 else { return }
-                                    offset = CGSize(
-                                        width: lastOffset.width + value.translation.width,
-                                        height: lastOffset.height + value.translation.height)
-                                }
-                                .onEnded { _ in lastOffset = offset }
-                        )
-                )
-                .onTapGesture(count: 2) {
-                    withAnimation { resetZoom() }
-                }
+            
+            VStack {
+                Spacer()
+                Image(uiImage: image)
+                    .resizable()
+                    .interpolation(isPixelated ? .none : .high)   // crisp blocks for pixelated, smooth for the original photo
+                    .scaledToFit()
+                    .scaleEffect(scale)
+                    .offset(offset)
+                    .gesture(
+                        MagnifyGesture()
+                            .onChanged { value in
+                                scale = max(1, lastScale * value.magnification)
+                            }
+                            .onEnded { _ in
+                                lastScale = scale
+                                if scale <= 1 { resetZoom() }
+                            }
+                            .simultaneously(with:
+                                DragGesture()
+                                    .onChanged { value in
+                                        guard scale > 1 else { return }
+                                        offset = CGSize(
+                                            width: lastOffset.width + value.translation.width,
+                                            height: lastOffset.height + value.translation.height)
+                                    }
+                                    .onEnded { _ in lastOffset = offset }
+                            )
+                    )
+                    .onTapGesture(count: 2) {
+                        withAnimation { resetZoom() }
+                    }
+                Spacer()
+            }
 
             HStack {
                 Button("Done") { dismiss() }
